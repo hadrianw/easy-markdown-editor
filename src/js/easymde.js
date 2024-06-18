@@ -17,7 +17,6 @@ var marked = require('marked').marked;
 
 // Some variables
 var isMac = /Mac/.test(navigator.platform);
-var anchorToExternalRegex = new RegExp(/(<a.*?https?:\/\/.*?[^a]>)+?/g);
 
 // Mapping of actions that can be bound to keyboard shortcuts or toolbar buttons
 var bindings = {
@@ -87,25 +86,6 @@ var isMobile = function () {
     })(navigator.userAgent || navigator.vendor || window.opera);
     return check;
 };
-
-/**
- * Modify HTML to add 'target="_blank"' to links so they open in new tabs by default.
- * @param {string} htmlText - HTML to be modified.
- * @return {string} The modified HTML text.
- */
-function addAnchorTargetBlank(htmlText) {
-    var match;
-    while ((match = anchorToExternalRegex.exec(htmlText)) !== null) {
-        // With only one capture group in the RegExp, we can safely take the first index from the match.
-        var linkString = match[0];
-
-        if (linkString.indexOf('target=') === -1) {
-            var fixedLinkString = linkString.replace(/>$/, ' target="_blank">');
-            htmlText = htmlText.replace(linkString, fixedLinkString);
-        }
-    }
-    return htmlText;
-}
 
 /**
  * Modify HTML to remove the list-style when rendering checkboxes.
@@ -2054,9 +2034,6 @@ EasyMDE.prototype.markdown = function (text) {
         if (this.options.renderingConfig && typeof this.options.renderingConfig.sanitizerFunction === 'function') {
             htmlText = this.options.renderingConfig.sanitizerFunction.call(this, htmlText);
         }
-
-        // Edit the HTML anchors to add 'target="_blank"' by default.
-        htmlText = addAnchorTargetBlank(htmlText);
 
         // Remove list-style when rendering checkboxes
         htmlText = removeListStyleWhenCheckbox(htmlText);

@@ -1853,10 +1853,6 @@ function EasyMDE(options) {
     options.imageInputName = options.imageInputName || 'image';
 
 
-    // Change unique_id to uniqueId for backwards compatibility
-    if (options.autosave != undefined && options.autosave.unique_id != undefined && options.autosave.unique_id != '')
-        options.autosave.uniqueId = options.autosave.unique_id;
-
     // If overlay mode is specified and combine is not provided, default it to true
     if (options.overlayMode && options.overlayMode.combine === undefined) {
         options.overlayMode.combine = true;
@@ -2286,38 +2282,14 @@ EasyMDE.prototype.cleanup = function () {
     document.removeEventListener('keydown', this.documentOnKeyDown);
 };
 
-// Safari, in Private Browsing Mode, looks like it supports localStorage but all calls to setItem throw QuotaExceededError. We're going to detect this and set a variable accordingly.
-function isLocalStorageAvailable() {
-    if (typeof localStorage === 'object') {
-        try {
-            localStorage.setItem('smde_localStorage', 1);
-            localStorage.removeItem('smde_localStorage');
-        } catch (e) {
-            return false;
-        }
-    } else {
-        return false;
-    }
-
-    return true;
-}
-
 EasyMDE.prototype.autosave = function () {
-    if (isLocalStorageAvailable()) {
         var easyMDE = this;
-
-        if (this.options.autosave.uniqueId == undefined || this.options.autosave.uniqueId == '') {
-            console.log('EasyMDE: You must set a uniqueId to use the autosave feature');
-            return;
-        }
 
         if (this.options.autosave.binded !== true) {
             if (easyMDE.element.form != null && easyMDE.element.form != undefined) {
                 easyMDE.element.form.addEventListener('submit', function () {
                     clearTimeout(easyMDE.autosaveTimeoutId);
                     easyMDE.autosaveTimeoutId = undefined;
-
-                    localStorage.removeItem('smde_' + easyMDE.options.autosave.uniqueId);
                 });
             }
 
@@ -2325,45 +2297,38 @@ EasyMDE.prototype.autosave = function () {
         }
 
         if (this.options.autosave.loaded !== true) {
-            if (typeof localStorage.getItem('smde_' + this.options.autosave.uniqueId) == 'string' && localStorage.getItem('smde_' + this.options.autosave.uniqueId) != '') {
-                this.codemirror.setValue(localStorage.getItem('smde_' + this.options.autosave.uniqueId));
-                this.options.autosave.foundSavedValue = true;
-            }
-
-            this.options.autosave.loaded = true;
-        }
-
-        var value = easyMDE.value();
-        if (value !== '') {
-            localStorage.setItem('smde_' + this.options.autosave.uniqueId, value);
-        } else {
-            localStorage.removeItem('smde_' + this.options.autosave.uniqueId);
-        }
-
-        var el = document.getElementById('autosaved');
-        if (el != null && el != undefined && el != '') {
-            var d = new Date();
-            var dd = new Intl.DateTimeFormat([this.options.autosave.timeFormat.locale, 'en-US'], this.options.autosave.timeFormat.format).format(d);
-            var save = this.options.autosave.text == undefined ? 'Autosaved: ' : this.options.autosave.text;
-
-            el.innerHTML = save + dd;
-        }
-    } else {
-        console.log('EasyMDE: localStorage not available, cannot autosave');
-    }
-};
-
-EasyMDE.prototype.clearAutosavedValue = function () {
-    if (isLocalStorageAvailable()) {
-        if (this.options.autosave == undefined || this.options.autosave.uniqueId == undefined || this.options.autosave.uniqueId == '') {
-            console.log('EasyMDE: You must set a uniqueId to clear the autosave value');
+            fetch('/index.md').then(resp => resp.text()).then(text => {
+                    this.codemirror.setValue(text);
+                    this.options.autosave.loaded = true;
+            });
             return;
         }
 
-        localStorage.removeItem('smde_' + this.options.autosave.uniqueId);
-    } else {
-        console.log('EasyMDE: localStorage not available, cannot autosave');
-    }
+        var value = easyMDE.value();
+        fetch('/cgi-bin/update', {
+                method: 'POST',
+                headers: {'Content-Type': 'text/markdown'},
+                body: value,
+        }).then(resp => {
+                var el = document.getElementById('autosaved');
+                if (el != null && el != undefined && el != '') {
+                    var d = new Date();
+                    var dd = new Intl.DateTimeFormat([this.options.autosave.timeFormat.locale, 'en-US'], this.options.autosave.timeFormat.format).format(d);
+                    var save = this.options.autosave.text == undefined ? 'Autosaved: ' : this.options.autosave.text;
+                    if(resp.status !== 200) {
+                        save = '<span style="color:red">Autosave failed! ' + resp.status + ' ' + resp.statusText + '</span> ' + dd;
+                    }
+
+                    el.innerHTML = save + dd;
+                }
+        }).catch(err => {
+                var el = document.getElementById('autosaved');
+                if (el != null && el != undefined && el != '') {
+                    var d = new Date();
+                    var dd = new Intl.DateTimeFormat([this.options.autosave.timeFormat.locale, 'en-US'], this.options.autosave.timeFormat.format).format(d);
+                    el.innerHTML = '<span style="color:red">Autosave failed! ' + err + '</span> ' + dd;
+                }
+        });
 };
 
 /**
@@ -2994,36 +2959,6 @@ EasyMDE.prototype.getState = function () {
     var cm = this.codemirror;
 
     return getState(cm);
-};
-
-EasyMDE.prototype.toTextArea = function () {
-    var cm = this.codemirror;
-    var wrapper = cm.getWrapperElement();
-    var easyMDEContainer = wrapper.parentNode;
-
-    if (easyMDEContainer) {
-        if (this.gui.toolbar) {
-            easyMDEContainer.removeChild(this.gui.toolbar);
-        }
-        if (this.gui.statusbar) {
-            easyMDEContainer.removeChild(this.gui.statusbar);
-        }
-        if (this.gui.sideBySide) {
-            easyMDEContainer.removeChild(this.gui.sideBySide);
-        }
-    }
-
-    // Unwrap easyMDEcontainer before codemirror toTextArea() call
-    easyMDEContainer.parentNode.insertBefore(wrapper, easyMDEContainer);
-    easyMDEContainer.remove();
-
-    cm.toTextArea();
-
-    if (this.autosaveTimeoutId) {
-        clearTimeout(this.autosaveTimeoutId);
-        this.autosaveTimeoutId = undefined;
-        this.clearAutosavedValue();
-    }
 };
 
 module.exports = EasyMDE;

@@ -2319,19 +2319,26 @@ EasyMDE.prototype.autosave = function () {
                 if (el != null && el != undefined && el != '') {
                     var d = new Date();
                     var dd = new Intl.DateTimeFormat([this.options.autosave.timeFormat.locale, 'en-US'], this.options.autosave.timeFormat.format).format(d);
-                    var save = this.options.autosave.text == undefined ? 'Autosaved: ' : this.options.autosave.text;
-                    if(resp.status !== 200) {
-                        save = '<span style="color:red">Autosave failed! ' + resp.status + ' ' + resp.statusText + '</span> ' + dd;
+                    var save = '';
+                    if(resp.status === 200) {
+			save = this.options.autosave.text == undefined ? 'Autosaved: ' : this.options.autosave.text;
+                        el.classList.remove('failed');
+                    } else {
+                        save = 'Autosave failed! ' + resp.status + ' ' + resp.statusText + ' ' + dd;
+                        el.classList.add('failed');
                     }
 
                     el.innerHTML = save + dd;
+                    el.classList.toggle('toggle');
                 }
         }).catch(err => {
                 var el = document.getElementById('autosaved');
                 if (el != null && el != undefined && el != '') {
                     var d = new Date();
                     var dd = new Intl.DateTimeFormat([this.options.autosave.timeFormat.locale, 'en-US'], this.options.autosave.timeFormat.format).format(d);
-                    el.innerHTML = '<span style="color:red">Autosave failed! ' + err + '</span> ' + dd;
+                    el.innerHTML = 'Autosave failed! ' + err + ' ' + dd;
+                    el.classList.add('failed');
+                    el.classList.toggle('toggle');
                 }
         });
 };

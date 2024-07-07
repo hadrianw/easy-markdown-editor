@@ -1909,6 +1909,11 @@ function EasyMDE(options) {
         });
 
         this.codemirror.on('paste', function (cm, event) {
+            if(event.clipboardData.files.length === 0) {
+		return;
+            }
+            event.stopPropagation();
+            event.preventDefault();
             if (options.imageUploadFunction) {
                 self.uploadImagesUsingCustomFunction(options.imageUploadFunction, event.clipboardData.files);
             } else {

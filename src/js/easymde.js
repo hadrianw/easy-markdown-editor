@@ -2321,7 +2321,7 @@ EasyMDE.prototype.autosave = function () {
                     var dd = new Intl.DateTimeFormat([this.options.autosave.timeFormat.locale, 'en-US'], this.options.autosave.timeFormat.format).format(d);
                     var save = '';
                     if(resp.status === 200) {
-			save = this.options.autosave.text == undefined ? 'Autosaved: ' : this.options.autosave.text;
+                        save = this.options.autosave.text == undefined ? 'Autosaved: ' : this.options.autosave.text;
                         el.classList.remove('failed');
                     } else {
                         save = 'Autosave failed! ' + resp.status + ' ' + resp.statusText + ' ' + dd;

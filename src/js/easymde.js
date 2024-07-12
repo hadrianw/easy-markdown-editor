@@ -2202,6 +2202,7 @@ EasyMDE.prototype.render = function (el) {
             this.codemirror.setValue(text);
         }).then(() => {
             this.codemirror.on('change', function () {
+                document.getElementById('autosaved').classList.add('pending');
                 clearTimeout(self._autosave_timeout);
                 self._autosave_timeout = setTimeout(function () {
                     self.autosave();
@@ -2311,31 +2312,29 @@ EasyMDE.prototype.autosave = function () {
                 body: value,
         }).then(resp => {
                 var el = document.getElementById('autosaved');
-                if (el != null && el != undefined && el != '') {
-                    var d = new Date();
-                    var dd = new Intl.DateTimeFormat([this.options.autosave.timeFormat.locale, 'en-US'], this.options.autosave.timeFormat.format).format(d);
-                    var save = '';
-                    if(resp.status === 200) {
-                        save = this.options.autosave.text == undefined ? 'Autosaved: ' : this.options.autosave.text;
-                        el.classList.remove('failed');
-                    } else {
-                        save = 'Autosave failed! ' + resp.status + ' ' + resp.statusText + ' ' + dd;
-                        el.classList.add('failed');
-                    }
-
-                    el.innerHTML = save + dd;
-                    el.classList.toggle('toggle');
-                }
-        }).catch(err => {
-                var el = document.getElementById('autosaved');
-                if (el != null && el != undefined && el != '') {
-                    var d = new Date();
-                    var dd = new Intl.DateTimeFormat([this.options.autosave.timeFormat.locale, 'en-US'], this.options.autosave.timeFormat.format).format(d);
-                    el.innerHTML = 'Autosave failed! ' + err + ' ' + dd;
+                var d = new Date();
+                var dd = new Intl.DateTimeFormat([this.options.autosave.timeFormat.locale, 'en-US'], this.options.autosave.timeFormat.format).format(d);
+                var save = '';
+                if(resp.status === 200) {
+                    save = this.options.autosave.text == undefined ? 'Autosaved: ' : this.options.autosave.text;
+                    el.classList.remove('failed');
+                } else {
+                    save = 'Autosave failed! ' + resp.status + ' ' + resp.statusText + ' ' + dd;
                     el.classList.add('failed');
-                    el.classList.toggle('toggle');
                 }
-        });
+
+                el.innerHTML = save + dd;
+                el.classList.toggle('toggle');
+                el.classList.remove('pending');
+            }).catch(err => {
+                var el = document.getElementById('autosaved');
+                var d = new Date();
+                var dd = new Intl.DateTimeFormat([this.options.autosave.timeFormat.locale, 'en-US'], this.options.autosave.timeFormat.format).format(d);
+                el.innerHTML = 'Autosave failed! ' + err + ' ' + dd;
+                el.classList.add('failed');
+                el.classList.toggle('toggle');
+                el.classList.remove('pending');
+            });
 };
 
 /**

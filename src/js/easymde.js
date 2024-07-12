@@ -45,9 +45,11 @@ var bindings = {
     'redo': redo,
     'toggleSideBySide': toggleSideBySide,
     'toggleFullScreen': toggleFullScreen,
+    'autosave': autosave,
 };
 
 var shortcuts = {
+    'autosave': 'Cmd-S',
     'toggleBold': 'Cmd-B',
     'toggleItalic': 'Cmd-I',
     'drawLink': 'Cmd-K',
@@ -330,6 +332,15 @@ function getState(cm, pos) {
 
 // Saved overflow setting
 var saved_overflow = '';
+
+/**
+ * Cause autosave now.
+ * @param {EasyMDE} editor
+ */
+function autosave(editor) {
+    clearTimeout(editor._autosave_timeout);
+    editor.autosave();
+}
 
 /**
  * Toggle full screen of the editor.

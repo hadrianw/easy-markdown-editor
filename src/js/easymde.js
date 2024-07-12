@@ -2187,12 +2187,15 @@ EasyMDE.prototype.render = function (el) {
         this.gui.statusbar = this.createStatusbar();
     }
     if (options.autosave != undefined && options.autosave.enabled === true) {
-        this.autosave(); // use to load localstorage content
-        this.codemirror.on('change', function () {
-            clearTimeout(self._autosave_timeout);
-            self._autosave_timeout = setTimeout(function () {
-                self.autosave();
-            }, self.options.autosave.submit_delay || self.options.autosave.delay || 1000);
+        fetch('/index.md').then(resp => resp.text()).then(text => {
+            this.codemirror.setValue(text);
+        }).then(() => {
+            this.codemirror.on('change', function () {
+                clearTimeout(self._autosave_timeout);
+                self._autosave_timeout = setTimeout(function () {
+                    self.autosave();
+                }, self.options.autosave.submit_delay || self.options.autosave.delay || 1000);
+            });
         });
     }
 
@@ -2289,25 +2292,6 @@ EasyMDE.prototype.cleanup = function () {
 
 EasyMDE.prototype.autosave = function () {
         var easyMDE = this;
-
-        if (this.options.autosave.binded !== true) {
-            if (easyMDE.element.form != null && easyMDE.element.form != undefined) {
-                easyMDE.element.form.addEventListener('submit', function () {
-                    clearTimeout(easyMDE.autosaveTimeoutId);
-                    easyMDE.autosaveTimeoutId = undefined;
-                });
-            }
-
-            this.options.autosave.binded = true;
-        }
-
-        if (this.options.autosave.loaded !== true) {
-            fetch('/index.md').then(resp => resp.text()).then(text => {
-                    this.codemirror.setValue(text);
-                    this.options.autosave.loaded = true;
-            });
-            return;
-        }
 
         var value = easyMDE.value();
         fetch('/cgi-bin/update', {

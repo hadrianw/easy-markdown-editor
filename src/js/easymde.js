@@ -2306,6 +2306,9 @@ EasyMDE.prototype.autosave = function () {
         var easyMDE = this;
 
         var value = easyMDE.value();
+        if(!value.endsWith('\n')) {
+            value += '\n';
+        }
         fetch('/cgi-bin/update', {
                 method: 'POST',
                 headers: {'Content-Type': 'text/markdown'},

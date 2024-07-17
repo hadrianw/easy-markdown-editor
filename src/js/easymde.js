@@ -2802,8 +2802,7 @@ EasyMDE.prototype.createStatusbar = function (status) {
 
 
     // Insert the status bar into the DOM
-    var cmWrapper = this.codemirror.getWrapperElement();
-    cmWrapper.parentNode.insertBefore(bar, cmWrapper.nextSibling);
+    this.gui.toolbar.appendChild(bar);
     return bar;
 };
 

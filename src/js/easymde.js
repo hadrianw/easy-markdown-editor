@@ -17,6 +17,7 @@ var marked = require('marked').marked;
 
 // Some variables
 var isMac = /Mac/.test(navigator.platform);
+var anchorToExternalRegex = new RegExp(/(<a.*?https?:\/\/.*?[^a]>)+?/g);
 
 // Mapping of actions that can be bound to keyboard shortcuts or toolbar buttons
 var bindings = {
@@ -88,6 +89,25 @@ var isMobile = function () {
     })(navigator.userAgent || navigator.vendor || window.opera);
     return check;
 };
+
+/**
+ * Modify HTML to add 'target="_parent"' to links so they open outside of iframe by default.
+ * @param {string} htmlText - HTML to be modified.
+ * @return {string} The modified HTML text.
+ */
+function addAnchorTargetParent(htmlText) {
+    var match;
+    while ((match = anchorToExternalRegex.exec(htmlText)) !== null) {
+        // With only one capture group in the RegExp, we can safely take the first index from the match.
+        var linkString = match[0];
+
+        if (linkString.indexOf('target=') === -1) {
+            var fixedLinkString = linkString.replace(/>$/, ' target="_parent">');
+            htmlText = htmlText.replace(linkString, fixedLinkString);
+        }
+    }
+    return htmlText;
+}
 
 /**
  * Modify HTML to remove the list-style when rendering checkboxes.
@@ -256,7 +276,7 @@ function createToolbarButton(options, enableActions, enableTooltips, shortcuts, 
         } else if (typeof options.action === 'string') {
             el.onclick = function (e) {
                 e.preventDefault();
-                window.open(options.action, '_blank');
+                window.open(options.action, '_parent');
             };
         }
     }
@@ -2047,6 +2067,9 @@ EasyMDE.prototype.markdown = function (text) {
             htmlText = this.options.renderingConfig.sanitizerFunction.call(this, htmlText);
         }
 
+        // Edit the HTML anchors to add 'target="_parent"' by default.
+        htmlText = addAnchorTargetParent(htmlText);
+
         // Remove list-style when rendering checkboxes
         htmlText = removeListStyleWhenCheckbox(htmlText);
 
@@ -2082,7 +2105,7 @@ EasyMDE.prototype.render = function (el) {
                     if (typeof action === 'function') {
                         action(self);
                     } else if (typeof action === 'string') {
-                        window.open(action, '_blank');
+                        window.open(action, '_parent');
                     }
                 };
             })(key);

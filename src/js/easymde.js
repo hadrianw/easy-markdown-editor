@@ -62,15 +62,9 @@ var shortcuts = {
     'toggleHeading4': 'Ctrl+Alt+4',
     'toggleHeading5': 'Ctrl+Alt+5',
     'toggleHeading6': 'Ctrl+Alt+6',
-    'cleanBlock': 'Cmd-E',
     'drawImage': 'Cmd-Alt-I',
     'toggleBlockquote': 'Cmd-\'',
-    'toggleOrderedList': 'Cmd-Alt-L',
-    'toggleUnorderedList': 'Cmd-L',
     'toggleCodeBlock': 'Cmd-Alt-C',
-    'togglePreview': 'Cmd-P',
-    'toggleSideBySide': 'F9',
-    'toggleFullScreen': 'F11',
 };
 
 var getBindingName = function (f) {

@@ -2215,7 +2215,9 @@ EasyMDE.prototype.render = function (el) {
         this.gui.statusbar = this.createStatusbar();
     }
     if (options.autosave != undefined && options.autosave.enabled === true) {
-        fetch('/index.md').then(resp => resp.text()).then(text => {
+        fetch('/index.md', {
+            cache: 'reload',
+        }).then(resp => resp.text()).then(text => {
             this.codemirror.setValue(text);
         }).then(() => {
             this.codemirror.on('change', function () {
